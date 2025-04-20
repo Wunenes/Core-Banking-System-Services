@@ -1,6 +1,5 @@
 package com.accountMicroservice.dto.request;
 
-import com.accountMicroservice.model.Account;
 import com.accountMicroservice.model.AccountDescription;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -14,7 +13,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AccountCreateRequest extends Account {
+public class AccountCreateRequest {
     @Autowired
     AccountDescription accountDescription;
 
@@ -26,9 +25,7 @@ public class AccountCreateRequest extends Account {
     @NotNull(message = "Initial balance cannot be null")
     @DecimalMin(value = "0.0", message = "Initial balance cannot be negative")
     @Digits(integer = 15, fraction = 2, message = "Balance must have up to 2 decimal places")
-    private BigDecimal availableBalance;
-
-    private BigDecimal currentBalance = availableBalance;
+    private BigDecimal currentBalance;
 
     @NotBlank(message = "Account type is required")
     @Pattern(regexp = "CHECKING|SAVINGS|LOAN|FOREIGN",

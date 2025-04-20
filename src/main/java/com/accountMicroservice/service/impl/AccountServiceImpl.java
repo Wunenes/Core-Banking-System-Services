@@ -12,36 +12,48 @@ import com.accountMicroservice.service.AccountService;
 import com.accountMicroservice.utils.AccountNumberGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+@Service
 public class AccountServiceImpl implements AccountService {
     @Autowired
     AccountRepository accountRepository;
     @Override
     public AccountResponse createAccount(AccountCreateRequest request) {
-        if(request.getAccountType() == AccountDescription.AccountType.CHECKING){
+        if(request.getAccountType() == AccountDescription.AccountType.CHECKING &&
+                request.getCurrentBalance().compareTo(BigDecimal.valueOf(200)) < 0){
             request.setAccountStatus(AccountDescription.AccountStatus.INACTIVE);
         } else{
             request.setAccountStatus(AccountDescription.AccountStatus.ACTIVE);
         }
 
+        Account account = new Account();
+        account.setAccountType(request.getAccountType());
+        account.setCurrencyType(request.getCurrencyType());
+        account.setUserId(request.getUserId());
+        account.setAccountStatus(request.getAccountStatus());
+        account.setAvailableBalance(request.getCurrentBalance());
+        account.setCurrentBalance(request.getCurrentBalance());
+        account.setInterestRate(request.getInterestRate());
+
         while (true){
             String accountNumber = AccountNumberGenerator.generate(request.getAccountType());
-            request.setAccountNumber(accountNumber);
+            account.setAccountNumber(accountNumber);
             try{
-                accountRepository.save(request);
+                accountRepository.save(account);
                 break;
             } catch(DuplicateKeyException e){
                 // loop again to generate new account number
             }
         }
 
-        return new AccountResponse(request.getAccountType(), request.getAccountStatus(),
-                request.getCurrentBalance(), request.getAvailableBalance(), request.getCurrencyType(),
-                request.getAccountNumber());
+        return new AccountResponse(account.getAccountType(), account.getAccountStatus(),
+                account.getCurrentBalance(), account.getAvailableBalance(), account.getCurrencyType(),
+                account.getAccountNumber());
     }
 
     @Override
