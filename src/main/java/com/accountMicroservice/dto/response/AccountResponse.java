@@ -1,14 +1,12 @@
 package com.accountMicroservice.dto.response;
 
 import com.accountMicroservice.model.AccountDescription;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 
 @Getter
+@Builder
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
