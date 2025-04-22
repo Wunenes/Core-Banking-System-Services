@@ -1,5 +1,7 @@
 package com.accountMicroservice.model;
 
+import com.accountMicroservice.encryptors.*;
+import com.accountMicroservice.service.EncryptionService;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,27 +27,34 @@ public class Account {
         private Long id;
 
         @Column(name = "user_id", nullable = false)
+        @Convert(converter = UUIDEncryptor.class)
         private UUID userId;
 
         @Column(name = "account_number", nullable = false, unique = true)
+        @Convert(converter = StringEncryptor.class)
         private String accountNumber;
 
         @Column(name="current_balance", nullable = false)
+        @Convert(converter = BigDecimalEncryptor.class)
         private BigDecimal currentBalance;
 
         @Column(name="available_balance", nullable = false)
+        @Convert(converter = BigDecimalEncryptor.class)
         private BigDecimal availableBalance;
 
         @Enumerated(EnumType.STRING)
         @Column(name = "account_type", nullable = false)
+        @Convert(converter = AccountTypeEncryptor.class)
         private AccountDescription.AccountType accountType;
 
         @Enumerated(EnumType.STRING)
         @Column(name = "account_status", nullable = false)
+        @Convert(converter = AccountStatusEncryptor.class)
         private AccountDescription.AccountStatus accountStatus;
 
         @Enumerated(EnumType.STRING)
         @Column(name = "currency_type", nullable = false)
+        @Convert(converter = CurrencyTypeEncryptor.class)
         private AccountDescription.CurrencyType currencyType;
 
         @CreationTimestamp
@@ -57,5 +66,6 @@ public class Account {
         private LocalDateTime updatedAt;
 
         @Column(name="interest_rate")
+        @Convert(converter = BigDecimalEncryptor.class)
         private BigDecimal interestRate;
 }
