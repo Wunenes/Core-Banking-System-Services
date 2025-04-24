@@ -16,4 +16,5 @@ public class DebitResponse {
     private String accountNumber;
     private BigDecimal amount;
     private AccountDescription.CurrencyType currencyType;
+    private BigDecimal newBalance;
 }

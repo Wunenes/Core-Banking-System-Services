@@ -27,12 +27,12 @@ public class IneligibleAccountException extends Exception {
      * Constructs a new exception with a detail message, account ID, and the operation that was attempted.
      *
      * @param message the detail message
-     * @param accountId the ID of the frozen account
+     * @param accountNumber the ID of the frozen account
      * @param attemptedOperation the operation attempted on the frozen account
      */
-    public IneligibleAccountException(String message, String accountId, String attemptedOperation) {
+    public IneligibleAccountException(String message, String accountNumber, String attemptedOperation) {
         super(message);
-        this.accountId = accountId;
+        this.accountId = accountNumber;
         this.attemptedOperation = attemptedOperation;
     }
 

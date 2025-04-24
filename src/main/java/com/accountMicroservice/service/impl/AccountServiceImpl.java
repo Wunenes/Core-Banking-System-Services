@@ -10,7 +10,6 @@ import com.accountMicroservice.model.AccountDescription;
 import com.accountMicroservice.repository.AccountRepository;
 import com.accountMicroservice.service.AccountService;
 import com.accountMicroservice.utils.AccountNumberGenerator;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +19,6 @@ import java.util.Objects;
 
 @Service
 public class AccountServiceImpl implements AccountService {
-    @Autowired
     AccountRepository accountRepository;
     @Override
     public AccountResponse createAccount(AccountCreateRequest request) {
@@ -77,7 +75,7 @@ public class AccountServiceImpl implements AccountService {
         if (account.getAccountStatus() == AccountDescription.AccountStatus.FROZEN ||
                 account.getAccountStatus() == AccountDescription.AccountStatus.CLOSED ||
                 account.getAccountStatus() == AccountDescription.AccountStatus.DORMANT ){
-            throw new IneligibleAccountException("Account " + accountNumber + " is " + account.getAccountStatus(), accountNumber, "Credit Account");
+            throw new IneligibleAccountException(account.getAccountStatus().toString(), accountNumber, "Credit Account");
         }
 
         if (request.getCurrencyType() != account.getCurrencyType()){
@@ -92,7 +90,7 @@ public class AccountServiceImpl implements AccountService {
         }
 
         accountRepository.save(account);
-        return new CreditResponse(request.getAccountNumber(), request.getAmount(), request.getCurrencyType());
+        return new CreditResponse(request.getAccountNumber(), request.getAmount(), request.getCurrencyType(), account.getAvailableBalance());
     }
 
     @Override
@@ -107,7 +105,7 @@ public class AccountServiceImpl implements AccountService {
                 account.getAccountStatus() == AccountDescription.AccountStatus.CLOSED ||
                 account.getAccountStatus() == AccountDescription.AccountStatus.DORMANT ||
                 account.getAccountStatus() == AccountDescription.AccountStatus.INACTIVE){
-            throw new IneligibleAccountException("Account " + accountNumber + " is " + account.getAccountStatus(), accountNumber, "Debit Account");
+            throw new IneligibleAccountException(account.getAccountStatus().toString(), accountNumber, "Debit Account");
         }
 
         if (account.getAvailableBalance().compareTo(amount) < 0) {
@@ -122,7 +120,7 @@ public class AccountServiceImpl implements AccountService {
         account.setCurrentBalance(account.getCurrentBalance().subtract(amount));
 
         accountRepository.save(account);
-        return new DebitResponse(request.getAccountNumber(), request.getAmount(), request.getCurrencyType());
+        return new DebitResponse(request.getAccountNumber(), request.getAmount(), request.getCurrencyType(), account.getCurrentBalance());
     }
 
     @Override
@@ -133,7 +131,7 @@ public class AccountServiceImpl implements AccountService {
         String accountNumber = account.getAccountNumber();
 
         if (account.getAccountStatus() == AccountDescription.AccountStatus.FROZEN){
-            throw new IneligibleAccountException("Account " + accountNumber + " is frozen", accountNumber, "Delete Account");
+            throw new IneligibleAccountException(account.getAccountStatus().toString(), accountNumber, "Delete Account");
         }
 
         if (account.getCurrentBalance().compareTo(BigDecimal.valueOf(0)) > 0){

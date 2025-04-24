@@ -69,6 +69,7 @@ message CreditResponse {
   string account_number = 1;
   string amount = 2;
   CurrencyType currency_type = 3;
+  string newBalance =4;
 }
 
 message DebitRequest {
@@ -81,6 +82,7 @@ message DebitResponse {
   string account_number = 1;
   string amount = 2;
   CurrencyType currency_type = 3;
+  string newBalance = 4;
 }
 
 message FreezeActionRequest {
@@ -106,4 +108,16 @@ message DeleteResponse {
   string timestamp = 2;
   CreditResponse credit_response = 3;
   DebitResponse debit_response = 4;
-} 
+}
+
+message InsufficientFundsError {
+  string account_number = 1;
+  string current_balance = 2;
+  string requested_amount = 3;
+  string currency = 4;
+}
+
+message IneligibleAccountException {
+  string account_number = 1;
+  string attempted_Operation = 2;
+}

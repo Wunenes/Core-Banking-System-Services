@@ -1,8 +1,13 @@
 package com.accountMicroservice.grpc;
 
+import com.accountMicroservice.exceptions.AccountNotFoundException;
+import com.accountMicroservice.exceptions.IneligibleAccountException;
+import com.accountMicroservice.exceptions.InsufficientFundsException;
 import com.accountMicroservice.service.AccountService;
 import com.accountMicroservice.dto.request.*;
 import com.accountMicroservice.model.AccountDescription;
+import io.grpc.Metadata;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -40,8 +45,14 @@ public class AccountGrpcService extends AccountServiceGrpc.AccountServiceImplBas
             com.accountMicroservice.dto.response.AccountResponse response = accountService.getAccountDetails(request.getAccountNumber());
             responseObserver.onNext(convertToGrpcResponse(response));
             responseObserver.onCompleted();
+        } catch (AccountNotFoundException e) {
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("Account not found: " + e.getMessage())
+                    .asRuntimeException());
         } catch (Exception e) {
-            responseObserver.onError(io.grpc.Status.INTERNAL.withDescription(e.getMessage()).asRuntimeException());
+            responseObserver.onError(Status.INTERNAL
+                    .withDescription("Internal error: " + e.getMessage())
+                    .asRuntimeException());
         }
     }
 
@@ -57,8 +68,31 @@ public class AccountGrpcService extends AccountServiceGrpc.AccountServiceImplBas
             com.accountMicroservice.dto.response.CreditResponse response = accountService.creditAccount(creditRequest);
             responseObserver.onNext(convertToGrpcCreditResponse(response));
             responseObserver.onCompleted();
+        } catch(IneligibleAccountException e) {
+            Status status = Status.PERMISSION_DENIED
+                    .withDescription("Ineligible account for account debit operation");
+            Metadata metadata = new Metadata();
+            metadata.put(
+                    Metadata.Key.of("message", Metadata.ASCII_STRING_MARSHALLER),
+                    e.getMessage()
+            );
+            metadata.put(
+                    Metadata.Key.of("account", Metadata.ASCII_STRING_MARSHALLER),
+                    e.getAccountId()
+            );
+            metadata.put(
+                    Metadata.Key.of("attempted operation", Metadata.ASCII_STRING_MARSHALLER),
+                    e.getAttemptedOperation()
+            );
+            responseObserver.onError(status.asRuntimeException(metadata));
+        } catch (AccountNotFoundException e) {
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("Account not found: " + e.getMessage())
+                    .asRuntimeException());
         } catch (Exception e) {
-            responseObserver.onError(io.grpc.Status.INTERNAL.withDescription(e.getMessage()).asRuntimeException());
+            responseObserver.onError(Status.INTERNAL
+                    .withDescription("Internal error: " + e.getMessage())
+                    .asRuntimeException());
         }
     }
 
@@ -74,9 +108,52 @@ public class AccountGrpcService extends AccountServiceGrpc.AccountServiceImplBas
             com.accountMicroservice.dto.response.DebitResponse response = accountService.debitAccount(debitRequest);
             responseObserver.onNext(convertToGrpcDebitResponse(response));
             responseObserver.onCompleted();
+        } catch (InsufficientFundsException e) {
+            Status status = Status.FAILED_PRECONDITION
+                    .withDescription("Insufficient funds for account debit operation");
+
+            Metadata metadata = new Metadata();
+            metadata.put(
+                    Metadata.Key.of("message", Metadata.ASCII_STRING_MARSHALLER),
+                    e.getMessage()
+            );
+            metadata.put(
+                    Metadata.Key.of("account", Metadata.ASCII_STRING_MARSHALLER),
+                    e.getAccountNumber()
+            );
+            metadata.put(
+                    Metadata.Key.of("balance", Metadata.ASCII_STRING_MARSHALLER),
+                    e.getCurrentBalance().toPlainString()
+            );
+            metadata.put(
+                    Metadata.Key.of("requested", Metadata.ASCII_STRING_MARSHALLER),
+                    e.getAttemptedAmount().toPlainString()
+            );
+
+            responseObserver.onError(status.asRuntimeException(metadata));
+        } catch(IneligibleAccountException e){
+            Status status = Status.PERMISSION_DENIED
+                    .withDescription("Ineligible account for account debit operation");
+            Metadata metadata = new Metadata();
+            metadata.put(
+                    Metadata.Key.of("account", Metadata.ASCII_STRING_MARSHALLER),
+                    e.getAccountId()
+            );
+            metadata.put(
+                    Metadata.Key.of("attempted operation", Metadata.ASCII_STRING_MARSHALLER),
+                    e.getAttemptedOperation()
+            );
+            responseObserver.onError(status.asRuntimeException(metadata));
+        } catch (AccountNotFoundException e) {
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("Account not found: " + e.getMessage())
+                    .asRuntimeException());
         } catch (Exception e) {
-            responseObserver.onError(io.grpc.Status.INTERNAL.withDescription(e.getMessage()).asRuntimeException());
+            responseObserver.onError(Status.INTERNAL
+                    .withDescription("Internal error: " + e.getMessage())
+                    .asRuntimeException());
         }
+
     }
 
     @Override
@@ -91,8 +168,14 @@ public class AccountGrpcService extends AccountServiceGrpc.AccountServiceImplBas
             com.accountMicroservice.dto.response.FreezeActionResponse response = accountService.freezeAction(freezeRequest);
             responseObserver.onNext(convertToGrpcFreezeActionResponse(response));
             responseObserver.onCompleted();
+        }  catch (AccountNotFoundException e) {
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("Account not found: " + e.getMessage())
+                    .asRuntimeException());
         } catch (Exception e) {
-            responseObserver.onError(io.grpc.Status.INTERNAL.withDescription(e.getMessage()).asRuntimeException());
+            responseObserver.onError(Status.INTERNAL
+                    .withDescription("Internal error: " + e.getMessage())
+                    .asRuntimeException());
         }
     }
 
@@ -107,8 +190,50 @@ public class AccountGrpcService extends AccountServiceGrpc.AccountServiceImplBas
             com.accountMicroservice.dto.response.DeleteResponse response = accountService.deleteAccount(deleteRequest);
             responseObserver.onNext(convertToGrpcDeleteResponse(response));
             responseObserver.onCompleted();
+        } catch (InsufficientFundsException e) {
+            Status status = Status.FAILED_PRECONDITION
+                    .withDescription("Insufficient funds for account debit operation");
+
+            Metadata metadata = new Metadata();
+            metadata.put(
+                    Metadata.Key.of("account", Metadata.ASCII_STRING_MARSHALLER),
+                    e.getAccountNumber()
+            );
+            metadata.put(
+                    Metadata.Key.of("balance", Metadata.ASCII_STRING_MARSHALLER),
+                    e.getCurrentBalance().toPlainString()
+            );
+            metadata.put(
+                    Metadata.Key.of("requested", Metadata.ASCII_STRING_MARSHALLER),
+                    e.getAttemptedAmount().toPlainString()
+            );
+
+            responseObserver.onError(status.asRuntimeException(metadata));
+        } catch(IneligibleAccountException e){
+            Status status = Status.PERMISSION_DENIED
+                    .withDescription("Ineligible account for account deletion operation");
+            Metadata metadata = new Metadata();
+            metadata.put(
+                    Metadata.Key.of("message", Metadata.ASCII_STRING_MARSHALLER),
+                    e.getMessage()
+            );
+            metadata.put(
+                    Metadata.Key.of("account", Metadata.ASCII_STRING_MARSHALLER),
+                    e.getAccountId()
+            );
+            metadata.put(
+                    Metadata.Key.of("attempted operation", Metadata.ASCII_STRING_MARSHALLER),
+                    e.getAttemptedOperation()
+            );
+            responseObserver.onError(status.asRuntimeException(metadata));
+        } catch (AccountNotFoundException e) {
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("Account not found: " + e.getMessage())
+                    .asRuntimeException());
         } catch (Exception e) {
-            responseObserver.onError(io.grpc.Status.INTERNAL.withDescription(e.getMessage()).asRuntimeException());
+            responseObserver.onError(Status.INTERNAL
+                    .withDescription("Internal error: " + e.getMessage())
+                    .asRuntimeException());
         }
     }
 

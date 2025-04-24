@@ -1,7 +1,6 @@
 package com.accountMicroservice.model;
 
 import com.accountMicroservice.encryptors.*;
-import com.accountMicroservice.service.EncryptionService;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
