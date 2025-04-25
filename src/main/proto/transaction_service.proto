@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package org.transactionMicroservice.grpc;
+
+option java_multiple_files = true;
+option java_package = "org.transactionMicroservice.grpc";
+option java_outer_classname = "TransactionServiceProto";
+
+service TransactionService {
+  // Process an internal transfer between accounts
+  rpc InternalTransfer(TransactionRequest) returns (TransactionResponse) {}
+  
+  // Process a deposit to an account
+  rpc ProcessDeposit(TransactionRequest) returns (TransactionResponse) {}
+  
+  // Get transaction details by transaction reference
+  rpc GetTransactionByReference(TransactionReferenceRequest) returns (TransactionResponse) {}
+  
+  // Get all transactions for an account
+  rpc GetTransactionsByAccountId(AccountTransactionsRequest) returns (TransactionsListResponse) {}
+}
+
+// Request message for transaction operations
+message TransactionRequest {
+  string source_account_id = 1;
+  string destination_account_id = 2;
+  string amount = 3; // Using string for BigDecimal precision
+  string currency = 4;
+  TransactionType transaction_type = 5;
+  string description = 6;
+  string metadata = 7; // Optional JSON string for additional data
+}
+
+// Response message for transaction operations
+message TransactionResponse {
+  string transaction_reference = 1;
+  string source_account_id = 2;
+  string destination_account_id = 3;
+  string amount = 4;
+  string currency = 5;
+  TransactionType transaction_type = 6;
+  TransactionStatus transaction_status = 7;
+  string timestamp = 8;
+  string description = 9;
+  string metadata = 10;
+}
+
+// Request to get a transaction by reference
+message TransactionReferenceRequest {
+  string transaction_reference = 1;
+}
+
+// Request to get all transactions for an account
+message AccountTransactionsRequest {
+  string account_id = 1;
+  int32 page = 2;
+  int32 size = 3;
+  string sort_by = 4;
+  bool ascending = 5;
+}
+
+// Response for multiple transactions
+message TransactionsListResponse {
+  repeated TransactionResponse transactions = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 size = 4;
+}
+
+// Transaction types
+enum TransactionType {
+  TRANSFER = 0;
+  DEPOSIT = 1;
+  WITHDRAWAL = 2;
+  PAYMENT = 3;
+  FEE = 4;
+  INTEREST = 5;
+}
+
+// Transaction statuses
+enum TransactionStatus {
+  PENDING = 0;
+  COMPLETED = 1;
+  FAILED = 2;
+  REVERSED = 3;
+  CANCELLED = 4;
+}
+
+// Currency types (matching what I see referenced in imports)
+enum CurrencyType {
+  USD = 0;
+  EUR = 1;
+  GBP = 2;
+  JPY = 3;
+  CAD = 4;
+  // Add other currencies as needed
+}
