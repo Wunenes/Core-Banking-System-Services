@@ -26,10 +26,10 @@ public class TransactionGrpcServiceImpl extends TransactionServiceGrpc.Transacti
         try {
             // Convert gRPC request to DTO
             TransactionRequestDTO requestDTO = TransactionRequestDTO.builder()
-                    .fromAccount(request.getSourceAccountId())
-                    .toAccount(request.getDestinationAccountId())
+                    .fromAccount(request.getFromAccount())
+                    .toAccount(request.getToAccount())
                     .amount(new BigDecimal(request.getAmount()))
-                    .currencyType(CurrencyType.valueOf(request.getCurrency()))
+                    .currencyType(CurrencyType.valueOf(request.getCurrencyType()))
                     .description(request.getDescription())
                     .build();
             
@@ -69,10 +69,10 @@ public class TransactionGrpcServiceImpl extends TransactionServiceGrpc.Transacti
         try {
             // Convert gRPC request to DTO
             TransactionRequestDTO requestDTO = TransactionRequestDTO.builder()
-                    .fromAccount(request.getSourceAccountId())
-                    .toAccount(request.getDestinationAccountId())
+                    .fromAccount(request.getFromAccount())
+                    .toAccount(request.getToAccount())
                     .amount(new BigDecimal(request.getAmount()))
-                    .currencyType(CurrencyType.valueOf(request.getCurrency()))
+                    .currencyType(CurrencyType.valueOf(request.getCurrencyType()))
                     .description(request.getDescription())
                     .build();
             
@@ -104,12 +104,14 @@ public class TransactionGrpcServiceImpl extends TransactionServiceGrpc.Transacti
     private TransactionResponse buildResponse(TransactionResponseDTO dto) {
         return TransactionResponse.newBuilder()
                 .setTransactionReference(dto.getTransactionReference())
-                .setSourceAccountId(dto.getFromAccount())
-                .setDestinationAccountId(dto.getToAccount())
+                .setFromAccount(dto.getFromAccount())
+                .setToAccount(dto.getToAccount())
                 .setAmount(dto.getAmount().toString())
-                .setCurrency(String.valueOf(dto.getCurrencyType()))
+                .setCurrencyType(String.valueOf(dto.getCurrencyType()))
                 .setTransactionType(TransactionType.valueOf(dto.getTransactionType().toString()))
                 .setTransactionStatus(TransactionStatus.valueOf(dto.getTransactionType().toString()))
+                .setFeeAmount(dto.getFeeAmount().toString())
+                .setFeeCurrency(dto.getFeeCurrencyType().toString())
                 .setTimestamp(dto.getTransactionTime() .format(DATE_FORMATTER))
                 .setDescription(dto.getDescription())
                 .build();

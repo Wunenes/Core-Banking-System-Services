@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-package org.transactionMicroservice.grpc;
+package com.transactionMicroservice.grpc;
 
 option java_multiple_files = true;
-option java_package = "org.transactionMicroservice.grpc";
+option java_package = "com.transactionMicroservice.grpc";
 option java_outer_classname = "TransactionServiceProto";
 
 service TransactionService {
@@ -22,27 +22,29 @@ service TransactionService {
 
 // Request message for transaction operations
 message TransactionRequest {
-  string source_account_id = 1;
-  string destination_account_id = 2;
-  string amount = 3; // Using string for BigDecimal precision
-  string currency = 4;
+  string from_account = 1;
+  string to_account = 2;
+  string amount = 3;
+  string currency_type = 4;
   TransactionType transaction_type = 5;
   string description = 6;
-  string metadata = 7; // Optional JSON string for additional data
+  string metadata = 7;
 }
 
 // Response message for transaction operations
 message TransactionResponse {
   string transaction_reference = 1;
-  string source_account_id = 2;
-  string destination_account_id = 3;
+  string from_account = 2;
+  string to_account = 3;
   string amount = 4;
-  string currency = 5;
+  string currency_type = 5;
   TransactionType transaction_type = 6;
   TransactionStatus transaction_status = 7;
-  string timestamp = 8;
-  string description = 9;
-  string metadata = 10;
+  string fee_amount = 8;
+  string fee_currency = 9;
+  string timestamp = 10;
+  string description = 11;
+  string metadata = 12;
 }
 
 // Request to get a transaction by reference
@@ -86,12 +88,22 @@ enum TransactionStatus {
   CANCELLED = 4;
 }
 
-// Currency types (matching what I see referenced in imports)
+// Currency Types
 enum CurrencyType {
   USD = 0;
   EUR = 1;
   GBP = 2;
-  JPY = 3;
-  CAD = 4;
-  // Add other currencies as needed
+  KES = 3;
+}
+
+message InsufficientFundsError {
+  string account_number = 1;
+  string current_balance = 2;
+  string requested_amount = 3;
+  string currency = 4;
+}
+
+message IneligibleAccountException {
+  string account_number = 1;
+  string attempted_Operation = 2;
 }
