@@ -13,7 +13,10 @@ import org.springframework.security.oauth2.jwt.JwtException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
+
+@Component
 public class AuthInterceptor implements ServerInterceptor {
     private static final Logger logger = LoggerFactory.getLogger(AuthInterceptor.class);
     

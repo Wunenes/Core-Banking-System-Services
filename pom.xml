@@ -19,7 +19,8 @@
         <java.version>23</java.version>
         <start-class>com.accountMicroservice.AccountMicroservice</start-class>
         <grpc.version>1.58.0</grpc.version>
-        <protobuf.version>3.21.7</protobuf.version>
+        <protobuf.version>4.28.2</protobuf.version>
+        <spring-security.version>6.4.4</spring-security.version>
     </properties>
 
     <dependencyManagement>
@@ -100,7 +101,6 @@
         </dependency>
 
         <!-- gRPC & Protobuf -->
-
         <dependency>
             <groupId>io.github.lognet</groupId>
             <artifactId>grpc-spring-boot-starter</artifactId>

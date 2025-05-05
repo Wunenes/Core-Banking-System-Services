@@ -99,7 +99,7 @@ public class AccountServiceImpl implements AccountService {
         BigDecimal amount = request.getAmount();
 
         Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(()-> new AccountNotFoundException("Account not found", "account number", accountNumber));
+                .orElseThrow(()-> new AccountNotFoundException("ACCOUNT NOT FOUND", "account number", accountNumber));
 
         if (account.getAccountStatus() == AccountDescription.AccountStatus.FROZEN ||
                 account.getAccountStatus() == AccountDescription.AccountStatus.CLOSED ||
@@ -109,11 +109,11 @@ public class AccountServiceImpl implements AccountService {
         }
 
         if (account.getAvailableBalance().compareTo(amount) < 0) {
-            throw new InsufficientFundsException("Insufficient funds in account" + accountNumber);
+            throw new InsufficientFundsException("INSUFFICIENT FUNDS", accountNumber, amount, account.getCurrentBalance(), account.getCurrencyType().toString());
         }
 
         if (request.getCurrencyType() != account.getCurrencyType()){
-            amount = amount.multiply(BigDecimal.valueOf(1.50));
+            amount = amount.multiply(BigDecimal.valueOf(1.50)); // Use real forex rates in production
         }
 
         account.setAvailableBalance(account.getAvailableBalance().subtract(amount));

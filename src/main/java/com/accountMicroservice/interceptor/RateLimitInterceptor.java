@@ -11,11 +11,13 @@ import io.grpc.Status;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Component
 public class RateLimitInterceptor implements ServerInterceptor {
     private static final Logger logger = LoggerFactory.getLogger(RateLimitInterceptor.class);
 
