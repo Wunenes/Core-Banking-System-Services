@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 public class AuthInterceptor implements ServerInterceptor {
     private static final Logger logger = LoggerFactory.getLogger(AuthInterceptor.class);
     
-    public static final Context.Key<String> CLIENT_ID_KEY = Context.key("clientId");
+    public static final Context.Key<String> CLIENT_ID_KEY = Context.key("client-id");
     public static final Metadata.Key<String> AUTHORIZATION_METADATA_KEY = 
             Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER);
     
@@ -55,6 +55,7 @@ public class AuthInterceptor implements ServerInterceptor {
             
             // Check for required roles or scopes here
             String scope = jwt.getClaimAsString("scope");
+            logger.info("Client: {}, scope: {}, call : {}", clientId, scope, call.getMethodDescriptor().getFullMethodName());
             if (scope == null || !hasRequiredScope(scope, call.getMethodDescriptor().getFullMethodName())) {
                 logger.warn("Insufficient privileges for client: {}", clientId);
                 call.close(Status.PERMISSION_DENIED.withDescription("Insufficient privileges"), new Metadata());
@@ -73,9 +74,9 @@ public class AuthInterceptor implements ServerInterceptor {
     
     private boolean hasRequiredScope(String scope, String methodName) {
         // Implement method-specific scope checking
-        if (methodName.contains("createAccount") || methodName.contains("deleteAccount")) {
+        if (methodName.contains("CreateAccount") || methodName.contains("deleteAccount")) {
             return scope.contains("account:write");
-        } else if (methodName.contains("getAccountDetails")) {
+        } else if (methodName.contains("GetAccountDetails") || methodName.contains("GetAccountDetailsByUserId")) {
             return scope.contains("account:read");
         } else if (methodName.contains("creditAccount") || methodName.contains("debitAccount")) {
             return scope.contains("account:transaction");

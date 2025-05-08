@@ -10,15 +10,23 @@ import com.accountMicroservice.model.AccountDescription;
 import com.accountMicroservice.repository.AccountRepository;
 import com.accountMicroservice.service.AccountService;
 import com.accountMicroservice.utils.AccountNumberGenerator;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class AccountServiceImpl implements AccountService {
+    @Autowired
     AccountRepository accountRepository;
     @Override
     public AccountResponse createAccount(AccountCreateRequest request) {
@@ -28,6 +36,8 @@ public class AccountServiceImpl implements AccountService {
         } else{
             request.setAccountStatus(AccountDescription.AccountStatus.ACTIVE);
         }
+
+        log.info("Request for {} has been received", request.getCurrentBalance());
 
         Account account = new Account();
         account.setAccountType(request.getAccountType());
@@ -52,6 +62,26 @@ public class AccountServiceImpl implements AccountService {
         return new AccountResponse(account.getAccountType(), account.getAccountStatus(),
                 account.getCurrentBalance(), account.getAvailableBalance(), account.getCurrencyType(),
                 account.getAccountNumber());
+    }
+
+    @SneakyThrows
+    @Override
+    public List<AccountResponse> getAccountDetailsByUserId(UUID userId) {
+        List<Account> accounts = accountRepository.findByUserId(userId);
+        if (accounts.isEmpty()){
+            throw new AccountNotFoundException("Account not found", userId.toString(), "userId");
+        }
+
+        return accounts.stream()
+                .map(account -> {
+                    try {
+                        return getAccountDetails(account.getAccountNumber());
+                    } catch (AccountNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
+
     }
 
     @Override

@@ -20,6 +20,7 @@ import java.util.UUID;
                 @Index(name = "idx_account_number", columnList = "accountNumber", unique = true),
                 @Index(name = "idx_currency_type", columnList = "currencyType"),
         })
+
 public class Account {
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,7 +31,7 @@ public class Account {
         private UUID userId;
 
         @Column(name = "account_number", nullable = false, unique = true)
-        @Convert(converter = StringEncryptor.class)
+        @Convert(converter = SearchableStringEncryptor.class)
         private String accountNumber;
 
         @Column(name="current_balance", nullable = false)

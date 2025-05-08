@@ -10,12 +10,15 @@ import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
+import net.devh.boot.grpc.server.service.GrpcService;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
-@Service
+@Slf4j
+@GrpcService
 @RequiredArgsConstructor
 public class AccountGrpcService extends AccountServiceGrpc.AccountServiceImplBase {
     private final AccountService accountService;
@@ -31,6 +34,7 @@ public class AccountGrpcService extends AccountServiceGrpc.AccountServiceImplBas
     @Override
     public void createAccount(CreateAccountRequest request, StreamObserver<AccountResponse> responseObserver) {
         try {
+            log.info("Request to create account for {} received, {}, {}, {}, {}", request.getUserId(), request.getAccountType(), request.getCurrencyType(), request.getCurrentBalance(), request.getInterestRate());
             AccountCreateRequest createRequest = AccountCreateRequest.builder()
                     .userId(UUID.fromString(request.getUserId()))
                     .accountType(AccountDescription.AccountType.valueOf(String.valueOf(request.getAccountType())))
@@ -39,9 +43,40 @@ public class AccountGrpcService extends AccountServiceGrpc.AccountServiceImplBas
                     .interestRate(new BigDecimal(request.getInterestRate()))
                     .build();
 
+            log.info("Account request created: {}", createRequest.toString());
             com.accountMicroservice.dto.response.AccountResponse response = accountService.createAccount(createRequest);
             responseObserver.onNext(convertToGrpcResponse(response));
             responseObserver.onCompleted();
+        } catch (Exception e) {
+            handleGenericError(responseObserver, e);
+        }
+    }
+
+    @Override
+    public void getAccountDetailsByUserId(GetAccountsByUserIdRequest request,
+                                          StreamObserver<AccountsListResponse> responseObserver) {
+        try {
+            // Convert the user ID string to UUID
+            UUID userId = UUID.fromString(request.getUserId());
+
+            // Call the service method
+            List<com.accountMicroservice.dto.response.AccountResponse> accountResponses =
+                    accountService.getAccountDetailsByUserId(userId);
+
+            // Convert to gRPC response
+            AccountsListResponse.Builder responseBuilder = AccountsListResponse.newBuilder();
+
+            // Add each account to the response
+            for (com.accountMicroservice.dto.response.AccountResponse response : accountResponses) {
+                responseBuilder.addAccounts(convertToGrpcResponse(response));
+            }
+
+            // Send the response
+            responseObserver.onNext(responseBuilder.build());
+            responseObserver.onCompleted();
+
+        } catch (AccountNotFoundException e) {
+            handleAccountNotFoundError(responseObserver, e);
         } catch (Exception e) {
             handleGenericError(responseObserver, e);
         }
@@ -157,7 +192,7 @@ public class AccountGrpcService extends AccountServiceGrpc.AccountServiceImplBas
                 .withDescription("Insufficient funds for account operation");
 
         Metadata metadata = new Metadata();
-        metadata.put(ERROR_TYPE_KEY, e.getMessage());
+        metadata.put(ERROR_TYPE_KEY, "INSUFFICIENT_FUNDS");
         metadata.put(ACCOUNT_NUMBER_KEY, e.getAccountNumber());
         metadata.put(BALANCE_KEY, e.getCurrentBalance().toPlainString());
         metadata.put(REQUESTED_KEY, e.getAttemptedAmount().toPlainString());
@@ -173,7 +208,7 @@ public class AccountGrpcService extends AccountServiceGrpc.AccountServiceImplBas
         metadata.put(ERROR_TYPE_KEY, "INELIGIBLE_ACCOUNT");
         metadata.put(ACCOUNT_STATUS_KEY, e.getMessage());
         metadata.put(ACCOUNT_NUMBER_KEY, e.getAccountId());
-        metadata.put(ATTEMPTED_OPERATION_KEY, e.getAttemptedOperation());
+        metadata.put(ATTEMPTED_OPERATION_KEY, operation);
 
         responseObserver.onError(status.asRuntimeException(metadata));
     }

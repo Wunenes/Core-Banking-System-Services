@@ -14,6 +14,7 @@ service AccountService {
   rpc DebitAccount(DebitRequest) returns (DebitResponse) {}
   rpc FreezeAction(FreezeActionRequest) returns (FreezeActionResponse) {}
   rpc DeleteAccount(DeleteRequest) returns (DeleteResponse) {}
+  rpc GetAccountDetailsByUserId(GetAccountsByUserIdRequest) returns (AccountsListResponse) {}
 }
 
 // Enums
@@ -45,6 +46,15 @@ message CreateAccountRequest {
   string current_balance = 4;
   string interest_rate = 5;
 }
+
+message GetAccountsByUserIdRequest {
+  string user_id = 1;
+}
+
+message AccountsListResponse {
+  repeated AccountResponse accounts = 1;
+}
+
 
 message GetAccountRequest {
   string account_number = 1;

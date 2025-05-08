@@ -18,7 +18,7 @@ public class UUIDEncryptor implements AttributeConverter<UUID, String> {
     @Override
     public String convertToDatabaseColumn(UUID attribute) {
         try {
-            return attribute == null ? null : encryptionService.encrypt(attribute.toString());
+            return attribute == null ? null : encryptionService.encryptDeterministic(attribute.toString());
         } catch (Exception e) {
             throw new RuntimeException("Encryption failed", e);
         }
