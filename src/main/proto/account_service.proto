@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "com.accountMicroservice.grpc";
+option java_package = "com.AccountService.grpc";
 option java_outer_classname = "AccountServiceProto";
 
 package account;
@@ -75,7 +75,6 @@ message DebitResponse {
   string amount = 2;
   CurrencyType currency_type = 3;
   string newBalance = 4;
-
 }
 
 message InsufficientFundsError {

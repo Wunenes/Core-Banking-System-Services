@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-package com.transactionMicroservice.grpc;
+package com.TransactionService.grpc;
 
 option java_multiple_files = true;
-option java_package = "com.transactionMicroservice.grpc";
+option java_package = "com.TransactionService.grpc";
 option java_outer_classname = "TransactionServiceProto";
 
 service TransactionService {
