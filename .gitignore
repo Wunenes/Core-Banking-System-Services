@@ -5,9 +5,7 @@ target/
 !**/src/main/resources/
 src/main/resources/
 src/main/resources/application.properties
-KeyStoreGenerator.sh
-CertificateManagementScript.sh
-.idea
+
 ### IntelliJ IDEA ###
 .idea/
 .idea/modules.xml

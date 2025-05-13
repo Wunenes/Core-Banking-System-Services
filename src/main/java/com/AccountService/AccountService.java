@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@ComponentScan("com.accountMicroservice")
+@ComponentScan("com.AccountService")
 public class AccountService {
     public static void main(String[] args) {
         SpringApplication.run(AccountService.class, args);
