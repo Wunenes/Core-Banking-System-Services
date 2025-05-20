@@ -114,7 +114,7 @@ public class UsersServiceImpl implements UsersService {
                 .governmentIdType(user.getGovernmentIdType())
                 .governmentIdNumber(user.getGovernmentIdNumber())
                 .kycVerified(user.isKycVerified())
-                .accountStatus(user.getUserStatus().toString())
+                .userStatus(user.getUserStatus().toString())
                 .riskCategory(user.getRiskCategory().toString())
                 .build();
     }
@@ -137,7 +137,7 @@ public class UsersServiceImpl implements UsersService {
 
         logger.info("Account creation for {} starting...", user.getUserId());
 
-        return accountServiceClient.createAccount(user.getUserId().toString(), request.getCurrentBalance(), request.getCurrencyType(), request.getAccountType());
+        return accountServiceClient.createAccount(user.getUserId().toString(), request.getCurrentBalance(), request.getCurrencyType(), request.getAccountType(), request.getInterestRate());
     }
 
     @Override

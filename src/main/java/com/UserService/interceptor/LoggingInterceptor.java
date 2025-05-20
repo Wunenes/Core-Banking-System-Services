@@ -18,11 +18,11 @@ public class LoggingInterceptor implements ServerInterceptor {
             Metadata headers,
             ServerCallHandler<ReqT, RespT> next) {
 
-        String transactionId = UUID.randomUUID().toString();
+        String logId = UUID.randomUUID().toString();
         String clientId = AuthInterceptor.CLIENT_ID_KEY.get();
         clientId = clientId != null ? clientId : "unknown-client";
 
-        MDC.put("transactionId", transactionId);
+        MDC.put("logId", logId);
         MDC.put("clientId", clientId);
         MDC.put("method", call.getMethodDescriptor().getFullMethodName());
 

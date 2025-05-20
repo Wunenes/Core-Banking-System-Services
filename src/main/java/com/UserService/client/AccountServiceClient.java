@@ -2,9 +2,7 @@ package com.UserService.client;
 
 import com.AccountService.grpc.*;
 import io.grpc.*;
-
 import java.util.concurrent.*;
-
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
@@ -186,7 +184,7 @@ public class AccountServiceClient {
         }
     }
 
-    public AccountResponse createAccount(String userId, String amount, CurrencyType currencyType, AccountType accountType) {
+    public AccountResponse createAccount(String userId, String amount, CurrencyType currencyType, AccountType accountType, String interestRate) {
         return executeWithRetry(() -> {
             CreateAccountRequest request = CreateAccountRequest.newBuilder()
                     .setUserId(userId)
@@ -195,6 +193,11 @@ public class AccountServiceClient {
                     .setCurrencyType(currencyType)
                     .setInterestRate("0.0000")
                     .build();
+            if (accountType != AccountType.CHECKING) {
+                request.newBuilderForType()
+                        .setInterestRate(interestRate)
+                        .build();
+            }
             logger.info("Request finished building");
             return blockingStub.createAccount(request);
         });

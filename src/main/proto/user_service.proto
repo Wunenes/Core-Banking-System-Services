@@ -1,0 +1,182 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.UserService.grpc";
+option java_outer_classname = "UserServiceProto";
+
+package userservice;
+
+import "google/protobuf/timestamp.proto";
+
+service UserService {
+  // Create a new user
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
+  
+  // Get user information
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {}
+  
+  // Get all accounts for a user
+  rpc GetUserAccounts(GetUserAccountsRequest) returns (AccountsListResponse) {}
+  
+  // Create an account for a user
+  rpc CreateAccount(CreateAccountRequest) returns (AccountResponse) {}
+  
+  // Update user information
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {}
+  
+  // Delete a user
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {}
+}
+
+// User creation related messages
+message CreateUserRequest {
+  string first_name = 1;
+  string middle_name = 2;
+  string last_name = 3;
+  string email = 4;
+  string password = 5;
+  string phone_number = 6;
+  
+  // Address information
+  string address_line1 = 7;
+  string address_line2 = 8;
+  string city = 9;
+  string state = 10;
+  string postal_code = 11;
+  string country = 12;
+  
+  // KYC information
+  google.protobuf.Timestamp date_of_birth = 13;
+  string nationality = 14;
+  string tax_identification_number = 15;
+  GovernmentIdType government_id_type = 16;
+  string government_id_number = 17;
+  RiskCategory risk_category = 18;
+}
+
+message CreateUserResponse {
+  string user_id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string email = 4;
+  string message = 5;
+}
+
+// User retrieval related messages
+message GetUserRequest {
+  string email = 1;
+}
+
+message GetUserResponse {
+  string user_id = 1;
+  string first_name = 2;
+  string middle_name = 3;
+  string last_name = 4;
+  string email = 5;
+  string phone_number = 6;
+  
+  // Address information
+  string address_line1 = 7;
+  string address_line2 = 8;
+  string city = 9;
+  string state = 10;
+  string postal_code = 11;
+  string country = 12;
+  
+  // KYC information
+  google.protobuf.Timestamp date_of_birth = 13;
+  string nationality = 14;
+  string tax_identification_number = 15;
+  GovernmentIdType government_id_type = 16;
+  string government_id_number = 17;
+  
+  // User verification status
+  bool email_verified = 18;
+  bool phone_verified = 19;
+  bool kyc_verified = 20;
+  UserStatus user_status = 21;
+  RiskCategory risk_category = 22;
+}
+
+// Account related messages
+message GetUserAccountsRequest {
+  string email = 1;
+}
+
+message AccountsListResponse {
+  repeated AccountResponse accounts = 1;
+}
+
+message CreateAccountRequest {
+  string email = 1;
+  string account_type = 2;
+  string currency = 3;
+  string current_balance = 4;
+  string interest_rate = 5;
+}
+
+message AccountResponse {
+  string account_number = 1;
+  string account_type = 2;
+  string currency = 3;
+  string balance = 4;
+  string status = 5;
+  string interest_rate = 6;
+}
+
+// User update related messages
+message UpdateUserRequest {
+  string email = 1;
+  string first_name = 2;
+  string middle_name = 3;
+  string last_name = 4;
+  string phone_number = 5;
+  
+  // Address information
+  string address_line1 = 6;
+  string address_line2 = 7;
+  string city = 8;
+  string state = 9;
+  string postal_code = 10;
+  string country = 11;
+}
+
+message UpdateUserResponse {
+  string email = 1;
+  string message = 2;
+  bool updated = 3;
+}
+
+// User deletion related messages
+message DeleteUserRequest {
+  string email = 1;
+}
+
+message DeleteUserResponse {
+  string user_id = 1;
+  string email = 2;
+  string message = 3;
+}
+
+// Enums
+enum GovernmentIdType {
+  RESIDENCE_PERMIT = 0;
+  PASSPORT = 1;
+  DRIVERS_LICENSE = 2;
+  ID_CARD = 3;
+  SOCIAL_SECURITY = 4;
+}
+
+enum UserStatus {
+  ACTIVE = 0;
+  PENDING = 1;
+  SUSPENDED = 2;
+  BLOCKED = 3;
+  UNDER_REVIEW = 4;
+}
+
+enum RiskCategory {
+  LOW = 0;
+  MEDIUM = 1;
+  HIGH = 2;
+}

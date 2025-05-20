@@ -35,7 +35,9 @@ public class GetUserResponse {
     private String taxIdentificationNumber;
     private GovernmentIdType governmentIdType;
     private String governmentIdNumber;
+    private boolean isEmailVerified;
+    private boolean isPhoneNumberVerified;
     private boolean kycVerified;
-    private String accountStatus;
+    private String userStatus;
     private String riskCategory;
 }

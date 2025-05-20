@@ -1,5 +1,6 @@
 package com.UserService.client;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -13,6 +14,14 @@ import java.util.Map;
 
 @Component
 public class TokenObtainService {
+
+    @Value("${client.id}")
+    private String clientId;
+
+    @Value("${client.secret}")
+    private String clientSecret;
+
+
     protected String obtainTokenFromAuthServer() {
 
         String tokenUrl = "http://localhost:9000/oauth2/token";
@@ -21,12 +30,12 @@ public class TokenObtainService {
         // Set up the headers
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        headers.setBasicAuth("client-id", "client-secret");
+        headers.setBasicAuth(clientId, clientSecret);
 
         // Set up the request body
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "client_credentials");
-        body.add("scope", "account:write account:read account:transaction");
+        body.add("scope", "account:write account:read");
         body.add("include_client_id", "true");
 
         // Create the HTTP entity with headers and body

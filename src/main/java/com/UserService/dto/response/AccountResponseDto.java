@@ -24,7 +24,7 @@ public class AccountResponseDto {
                 .accountType(grpcResponse.getAccountType().name())
                 .currencyType(grpcResponse.getCurrencyType().name())
                 .currentBalance(grpcResponse.getCurrentBalance())
-                .interestRate("0.000")
+                .interestRate(grpcResponse.getInterestRate())
                 .build();
     }
 }

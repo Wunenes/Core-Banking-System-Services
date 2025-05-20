@@ -32,7 +32,6 @@ public class CreateUserRequest {
     @NotNull(message = "Phone Number is required")
     private String phoneNumber;
 
-    
     // Address information
     @NotNull(message = "Address Line 1 is required")
     private String addressLine1;
@@ -67,6 +66,4 @@ public class CreateUserRequest {
     @NotNull(message = "Government Id Number is required")
     private String governmentIdNumber;
 
-    @NotNull(message = "Risk Category is required")
-    private RiskCategory riskCategory;
 }
