@@ -17,5 +17,5 @@ public class AccountResponse {
     private BigDecimal availableBalance;
     private AccountDescription.CurrencyType currencyType;
     private String accountNumber;
-
+    private BigDecimal interestRate;
 }

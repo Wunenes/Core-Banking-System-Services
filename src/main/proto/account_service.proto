@@ -67,6 +67,7 @@ message AccountResponse {
   string available_balance = 4;
   CurrencyType currency_type = 5;
   string account_number = 6;
+  string interest_rate = 7;
 }
 
 message CreditRequest {

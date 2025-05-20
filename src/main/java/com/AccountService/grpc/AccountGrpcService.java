@@ -52,8 +52,6 @@ public class AccountGrpcService extends AccountServiceGrpc.AccountServiceImplBas
             handleGenericError(responseObserver, e);
         }
     }
-
-
     @Override
     @Cacheable("accounts")
     public void getAccountDetailsByUserId(GetAccountsByUserIdRequest request,
@@ -231,6 +229,7 @@ public class AccountGrpcService extends AccountServiceGrpc.AccountServiceImplBas
                 .setAvailableBalance(response.getAvailableBalance().toString())
                 .setCurrencyType(convertCurrencyType(response.getCurrencyType()))
                 .setAccountNumber(response.getAccountNumber())
+                .setInterestRate(response.getInterestRate().toString())
                 .build();
     }
 

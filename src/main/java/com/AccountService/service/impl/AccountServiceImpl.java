@@ -61,7 +61,7 @@ public class AccountServiceImpl implements AccountService {
 
         return new AccountResponse(account.getAccountType(), account.getAccountStatus(),
                 account.getCurrentBalance(), account.getAvailableBalance(), account.getCurrencyType(),
-                account.getAccountNumber());
+                account.getAccountNumber(), account.getInterestRate());
     }
 
     @SneakyThrows
@@ -91,7 +91,7 @@ public class AccountServiceImpl implements AccountService {
 
         return new AccountResponse(account.getAccountType(), account.getAccountStatus(),
                 account.getCurrentBalance(), account.getAvailableBalance(), account.getCurrencyType(),
-                account.getAccountNumber());
+                account.getAccountNumber(), account.getInterestRate());
     }
 
     @Override
