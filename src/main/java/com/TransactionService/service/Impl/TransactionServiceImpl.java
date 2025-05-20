@@ -7,8 +7,7 @@ import org.springframework.stereotype.Service;
 import com.TransactionService.client.AccountServiceClient;
 import com.TransactionService.dto.TransactionRequestDTO;
 import com.TransactionService.dto.TransactionResponseDTO;
-import com.TransactionService.exceptions.IneligibleAccountException;
-import com.TransactionService.exceptions.InsufficientFundsException;
+import com.TransactionService.exceptions.*;
 import com.TransactionService.model.Transaction;
 import com.TransactionService.model.TransactionDescription;
 import com.TransactionService.repository.TransactionRepository;
@@ -17,6 +16,8 @@ import com.TransactionService.service.TransactionService;
 import com.TransactionService.util.TransactionNumberGenerator;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class TransactionServiceImpl implements TransactionService, TransactionMapper {
@@ -98,6 +99,42 @@ public class TransactionServiceImpl implements TransactionService, TransactionMa
             throw new RuntimeException("Deposit failed: " + e.getMessage(), e);
         }
     }
+
+    @Override
+    public TransactionResponseDTO getTransactionByReference(String transactionReference) {
+        return transactionRepository.findByTransactionReference(transactionReference)
+                .map(this::toResponseDTO)
+                .orElseThrow(() -> new TransactionNotFoundException("Transaction with reference " +
+                        transactionReference + " not found"));
+    }
+
+    @Override
+    public List<TransactionResponseDTO> getTransactionsByFromAccount(String fromAccount) {
+        List<Transaction> transactions = transactionRepository.findByFromAccount(fromAccount);
+
+        return transactions.stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
+
+    @Override
+    public List<TransactionResponseDTO> getTransactionsByToAccount(String toAccount) {
+        List<Transaction> transactions = transactionRepository.findByToAccount(toAccount);
+
+        return transactions.stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
+
+    @Override
+    public List<TransactionResponseDTO> getTransactionByTransactionTime(LocalDateTime transactionTime) {
+        List<Transaction> transactions = transactionRepository.findByTransactionTime(transactionTime);
+
+        return transactions.stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
+
 
     private String generateTransactionReference(TransactionDescription.TransactionType transactionType, TransactionDescription.TransactionStatus status) {
         return TransactionNumberGenerator.generate(transactionType, status);

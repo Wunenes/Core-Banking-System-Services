@@ -10,8 +10,8 @@
         <version>3.4.2</version>
     </parent>
 
-    <groupId>com.transactionmicroservice</groupId>
-    <artifactId>spring-example</artifactId>
+    <groupId>com.TransactionService</groupId>
+    <artifactId>transaction-service</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
@@ -45,7 +45,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.36</version>
+            <version>1.18.38</version>
             <scope>provided</scope>
         </dependency>
 
@@ -157,9 +157,9 @@
     </dependencies>
 
     <properties>
-        <start-class>com.TransactionService</start-class>
-        <java.version>23</java.version>
-        <grpc.version>1.58.0</grpc.version>
+        <start-class>com.TransactionService.TransactionService</start-class>
+        <java.version>24</java.version>
+        <grpc.version>1.72.0</grpc.version>
         <protobuf.version>4.28.2</protobuf.version>
         <spring-security.version>6.4.4</spring-security.version>
     </properties>
@@ -187,11 +187,11 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
-                            <version>1.18.36</version>
+                            <version>1.18.38</version>
                         </path>
                     </annotationProcessorPaths>
-                    <source>23</source>
-                    <target>23</target>
+                    <source>24</source>
+                    <target>24</target>
                     <compilerArgs>--enable-preview</compilerArgs>
                 </configuration>
             </plugin>

@@ -15,9 +15,23 @@ service TransactionService {
   
   // Get transaction details by transaction reference
   rpc GetTransactionByReference(TransactionReferenceRequest) returns (TransactionResponse) {}
-  
+
+  // Get transactions based on fromAccount
+  rpc GetTransactionsByFromAccount(AccountRequest) returns (TransactionsListResponse) {}
+
+  // Get transactions based on toAccount
+  rpc GetTransactionsByToAccount(AccountRequest) returns (TransactionsListResponse) {}
+
   // Get all transactions for an account
   rpc GetTransactionsByAccountId(AccountTransactionsRequest) returns (TransactionsListResponse) {}
+
+  // Get transaction by transaction time
+  rpc GetTransactionByTransactionTime(TransactionTimeRequest) returns (TransactionsListResponse) {}
+
+}
+
+message AccountRequest {
+  string account_id = 1;
 }
 
 // Request message for transaction operations
@@ -59,6 +73,12 @@ message AccountTransactionsRequest {
   int32 size = 3;
   string sort_by = 4;
   bool ascending = 5;
+}
+
+
+// Request to get a transaction by transaction time
+message TransactionTimeRequest {
+  string transaction_time = 1;
 }
 
 // Response for multiple transactions

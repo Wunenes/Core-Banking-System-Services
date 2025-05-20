@@ -63,13 +63,11 @@ public class AuthInterceptor implements ServerInterceptor {
     
     private boolean hasRequiredScope(String scope, String methodName) {
         // Implement method-specific scope checking
-        if (methodName.contains("createAccount") || methodName.contains("deleteAccount")) {
-            return scope.contains("account:write");
-        } else if (methodName.contains("getAccountDetails")) {
-            return scope.contains("account:read");
-        } else if (methodName.contains("creditAccount") || methodName.contains("debitAccount")) {
+        if (methodName.contains("InternalTransfer") || methodName.contains("ProcessDeposit")) {
             return scope.contains("account:transaction");
-        } else if (methodName.contains("freezeAction")) {
+        } else if (methodName.contains("GetTransactionByReference") || methodName.contains("GetTransactionsByAccountId") || methodName.contains("GetTransactionByFromAccount") || methodName.contains("GetTransactionByToAccount")) {
+            return scope.contains("account:read");
+        } else if (methodName.contains("GetTransactionByTransactionTime")) {
             return scope.contains("account:admin");
         }
         return false;

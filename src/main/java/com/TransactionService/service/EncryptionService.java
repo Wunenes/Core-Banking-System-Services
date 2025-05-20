@@ -7,6 +7,8 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
 
@@ -38,6 +40,26 @@ public class EncryptionService {
         return Base64.getEncoder().encodeToString(combined);
     }
 
+    public String encryptDeterministic(String data) throws Exception {
+        if (data == null) return null;
+
+        // Generate a deterministic IV from the data
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        byte[] hash = md.digest(data.getBytes(StandardCharsets.UTF_8));
+        byte[] iv = new byte[GCM_IV_LENGTH];
+        System.arraycopy(hash, 0, iv, 0, GCM_IV_LENGTH);
+
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);
+        cipher.init(Cipher.ENCRYPT_MODE, key, spec);
+
+        byte[] encrypted = cipher.doFinal(data.getBytes());
+        byte[] combined = new byte[iv.length + encrypted.length];
+        System.arraycopy(iv, 0, combined, 0, iv.length);
+        System.arraycopy(encrypted, 0, combined, iv.length, encrypted.length);
+
+        return Base64.getEncoder().encodeToString(combined);
+    }
     public String decrypt(String encryptedData) throws Exception {
         byte[] combined = Base64.getDecoder().decode(encryptedData);
 

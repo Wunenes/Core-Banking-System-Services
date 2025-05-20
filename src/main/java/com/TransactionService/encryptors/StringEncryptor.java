@@ -1,10 +1,10 @@
 package com.TransactionService.encryptors;
 
-import com.TransactionService.service.EncryptionService;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import com.TransactionService.service.EncryptionService;
 
 @Converter
 @Component
@@ -16,7 +16,7 @@ public class StringEncryptor implements AttributeConverter<String, String> {
     @Override
     public String convertToDatabaseColumn(String attribute) {
         try {
-            return attribute == null ? null : encryptionService.encrypt(attribute);
+            return attribute == null ? null : encryptionService.encryptDeterministic(attribute);
         } catch (Exception e) {
             throw new RuntimeException("Encryption failed", e);
         }
