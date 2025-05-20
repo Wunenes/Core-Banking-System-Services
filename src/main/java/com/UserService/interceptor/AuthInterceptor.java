@@ -71,10 +71,6 @@ public class AuthInterceptor implements ServerInterceptor {
             return scope.contains("account:write");
         } else if (methodName.contains("GetUser") || methodName.contains("GetUserAccounts")) {
             return scope.contains("account:read");
-        } else if (methodName.contains("creditAccount") || methodName.contains("debitAccount")) {
-            return scope.contains("account:transaction");
-        } else if (methodName.contains("freezeAction")) {
-            return scope.contains("account:admin");
         }
         return false;
     }
