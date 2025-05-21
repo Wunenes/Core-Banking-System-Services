@@ -7,7 +7,9 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,7 +18,6 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -43,15 +44,31 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Value("${userService.client.id}")
+    private String userServiceClientId;
+
+    @Value("${userService.client.secret}")
+    private String userServiceClientSecret;
+
+    @Value("${transactionService.client.id}")
+    private String transactionServiceClientId;
+
+    @Value("${transactionService.client.secret}")
+    private String transactionServiceClientSecret;
+
     @Bean
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-        OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-        http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-                .oidc(Customizer.withDefaults());
+        http
+                .securityMatcher("/.well-known/**", "/oauth2/**", "/connect/**")
+                .csrf(AbstractHttpConfigurer::disable)
+                .with(new OAuth2AuthorizationServerConfigurer(), (authorizationServerConfigurer) ->
+                        authorizationServerConfigurer.oidc(Customizer.withDefaults())
+                )
+                .oauth2ResourceServer(oauth2 ->
+                        oauth2.jwt(Customizer.withDefaults())
+                );
 
-        http.oauth2ResourceServer(oauth2 -> oauth2
-                .jwt(Customizer.withDefaults())
-        );
         return http.build();
     }
 
@@ -72,9 +89,7 @@ public class SecurityConfig {
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        // Configure which claim to extract authorities from (default is "scope" or "scp")
         grantedAuthoritiesConverter.setAuthoritiesClaimName("scope");
-        // Configure the authority prefix (default is "SCOPE_")
         grantedAuthoritiesConverter.setAuthorityPrefix("SCOPE_");
 
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
@@ -102,7 +117,25 @@ public class SecurityConfig {
                 .scope("account:write")
                 .scope("account:transaction")
                 .build();
-        return new InMemoryRegisteredClientRepository(registeredClient);
+
+        RegisteredClient userService = RegisteredClient.withId(UUID.randomUUID().toString())
+                .clientId(userServiceClientId)
+                .clientSecret(userServiceClientSecret)
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+                .scope("account:read")
+                .build();
+
+        RegisteredClient transactionService = RegisteredClient.withId(UUID.randomUUID().toString())
+                .clientId(transactionServiceClientId)
+                .clientSecret(transactionServiceClientSecret)
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+                .scope("account:read")
+                .scope("account:write")
+                .build();
+
+        return new InMemoryRegisteredClientRepository(registeredClient, userService, transactionService);
     }
 
     @Bean
@@ -119,9 +152,6 @@ public class SecurityConfig {
     public JWKSource<SecurityContext> jwkSource() {
         RSAKey rsaKey = generateRsa();
         JWKSet jwkSet = new JWKSet(rsaKey);
-
-        System.out.println("JWK Key ID: " + rsaKey.getKeyID());
-        System.out.println("JWK Algorithm: " + rsaKey.getAlgorithm());
 
         return (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
     }
