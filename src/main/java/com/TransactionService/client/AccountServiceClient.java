@@ -1,12 +1,7 @@
 package com.TransactionService.client;
 
 import com.AccountService.grpc.*;
-import com.nimbusds.jwt.JWT;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.JWTParser;
 import io.grpc.*;
-
-import java.util.Date;
 import java.util.concurrent.Executor;
 
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
@@ -19,10 +14,12 @@ import com.TransactionService.exceptions.AccountNotFoundException;
 import com.TransactionService.exceptions.IneligibleAccountException;
 import com.TransactionService.exceptions.InsufficientFundsException;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.net.ssl.SSLException;
 import java.io.File;
 import java.math.BigDecimal;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -40,6 +37,9 @@ public class AccountServiceClient {
     private final Object tokenLock = new Object();
     private static final int MAX_RETRIES = 3;
     private static final int TOKEN_EXPIRY_BUFFER_MS = 60000;
+    private static final int KEEP_ALIVE_TIME_SECONDS = 30;
+    private static final int KEEP_ALIVE_TIMEOUT_SECONDS = 10;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     @Value("${grpc.server.host}")
     private String grpcHost;
@@ -56,27 +56,77 @@ public class AccountServiceClient {
     @Value("${grpc.ssl.clientKeyPath}")
     private String clientKeyPath;
 
-    private synchronized void ensureConnection() {
-        if (channel == null || channel.isShutdown()) {
-            try {
-                SslContext sslContext = GrpcSslContexts.forClient()
-                        .trustManager(new File(caCertPath))
-                        .keyManager(
-                                new File(clientCertPath),
-                                new File(clientKeyPath)
-                        )
-                        .build();
-                // Set up channel
+    @PostConstruct
+    public void init() {
+        establishConnection();
+        // Schedule token refresh before expiration
+        scheduler.scheduleAtFixedRate(this::proactiveTokenRefresh, 1, 1, TimeUnit.MINUTES);
+    }
+
+    private void proactiveTokenRefresh() {
+        try {
+            long currentTime = System.currentTimeMillis();
+            if (tokenExpirationTime - currentTime < TOKEN_EXPIRY_BUFFER_MS * 3) {
+                synchronized (tokenLock) {
+                    refreshToken();
+                    updateStubWithToken();
+                }
+            }
+        } catch (Exception e) {
+            logger.warning("Failed to proactively refresh token: " + e.getMessage());
+        }
+    }
+
+    private synchronized void establishConnection() {
+        try {
+            SslContext sslContext = GrpcSslContexts.forClient()
+                    .trustManager(new File(caCertPath))
+                    .keyManager(
+                            new File(clientCertPath),
+                            new File(clientKeyPath)
+                    )
+                    .build();
+            if (channel == null || channel.isShutdown()) {
                 channel = NettyChannelBuilder.forAddress(grpcHost, grpcPort)
-                        .sslContext(sslContext)
+                        .usePlaintext()
+                        .keepAliveTime(KEEP_ALIVE_TIME_SECONDS, TimeUnit.SECONDS)
+                        .keepAliveTimeout(KEEP_ALIVE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                        .keepAliveWithoutCalls(true)
+                        .maxInboundMessageSize(20 * 1024 * 1024) // 20MB
                         .build();
 
-                // Create initial stub
-                blockingStub = AccountServiceGrpc.newBlockingStub(channel);
-                checkAndRefreshTokenIfNeeded();
-            } catch (SSLException e) {
-                Logger.getLogger(AccountServiceClient.class.getName()).log(Level.SEVERE, null, e);
+                // Get initial token and create stub
+                refreshToken();
+                blockingStub = AccountServiceGrpc.newBlockingStub(channel)
+                        .withCallCredentials(new JwtCredential(jwtToken));
+
+                logger.info("gRPC connection established to " + grpcHost + ":" + grpcPort);
             }
+        } catch (Exception e) {
+            logger.severe("Failed to establish gRPC connection: " + e.getMessage());
+            throw new RuntimeException("Failed to establish gRPC connection", e);
+        }
+
+    }
+
+    private static class JwtCredential extends CallCredentials {
+        private final String jwt;
+
+        JwtCredential(String jwt) {
+            this.jwt = jwt;
+        }
+
+        @Override
+        public void applyRequestMetadata(RequestInfo requestInfo, Executor appExecutor, MetadataApplier applier) {
+            appExecutor.execute(() -> {
+                try {
+                    Metadata metadata = new Metadata();
+                    metadata.put(Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER), "Bearer " + jwt);
+                    applier.apply(metadata);
+                } catch (Throwable e) {
+                    applier.fail(Status.UNAUTHENTICATED.withDescription("JWT token error").withCause(e));
+                }
+            });
         }
     }
 
@@ -145,7 +195,6 @@ public class AccountServiceClient {
     }
 
     public CreditResponse creditAccount(String accountNumber, BigDecimal amount, CurrencyType currencyType) throws Exception {
-        ensureConnection();
         return executeWithRetry(() -> {
             CreditRequest request = CreditRequest.newBuilder()
                     .setAccountNumber(accountNumber)
@@ -157,7 +206,6 @@ public class AccountServiceClient {
     }
 
     public DebitResponse debitAccount(String accountNumber, BigDecimal amount, CurrencyType currencyType) throws Exception {
-        ensureConnection();
         return executeWithRetry(() -> {
             DebitRequest request = DebitRequest.newBuilder()
                     .setAccountNumber(accountNumber)
@@ -169,65 +217,16 @@ public class AccountServiceClient {
         }, accountNumber);
     }
 
-    private void refreshToken() throws Exception {
-        jwtToken = this.tokenObtainService.obtainTokenFromAuthServer();
-        updateStubWithToken();
-
-        JWT jwt = JWTParser.parse(jwtToken);
-        JWTClaimsSet claims = jwt.getJWTClaimsSet();
-        Date expirationTime = claims.getExpirationTime();
-        if (expirationTime != null) {
-            this.tokenExpirationTime = expirationTime.getTime();
-            logger.info("Token refreshed, expires at: " + expirationTime);
-        } else {
-            // Default expiration if not specified (5 minutes)
-            this.tokenExpirationTime = System.currentTimeMillis() + 300000;
-            logger.info("Token refreshed, no expiration claim found, using default 5 minutes");
-        }
-    }
-
-    private void checkAndRefreshTokenIfNeeded() {
-        synchronized (tokenLock) {
-            long currentTime = System.currentTimeMillis();
-            // Refresh if token will expire in the next minute
-            if (currentTime > tokenExpirationTime - TOKEN_EXPIRY_BUFFER_MS) {
-                try {
-                    refreshToken();
-                } catch (Exception e) {
-                    logger.log(Level.WARNING, "Failed to proactively refresh token", e);
-                    // We'll continue with the current token and handle any errors during the actual call
-                }
-            }
-        }
+    private void refreshToken() {
+        jwtToken = tokenObtainService.obtainTokenFromAuthServer();
+        // Extract expiration from token or get it from the service
+        tokenExpirationTime = System.currentTimeMillis() + TOKEN_EXPIRY_BUFFER_MS * 5; // Assuming token lasts 5 minutes
+        logger.info("JWT token refreshed, expires in " + (tokenExpirationTime - System.currentTimeMillis()) + "ms");
     }
 
     private void updateStubWithToken() {
-        // Create a metadata with the JWT token
-        Metadata metadata = new Metadata();
-        metadata.put(
-                Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER),
-                "Bearer " + jwtToken
-        );
-
-        // Create JWT call credentials
-        CallCredentials callCredentials = new CallCredentials() {
-            @Override
-            public void applyRequestMetadata(RequestInfo requestInfo, Executor appExecutor, MetadataApplier applier) {
-                appExecutor.execute(() -> {
-                    try {
-                        applier.apply(metadata);
-                    } catch (Throwable e) {
-                        applier.fail(Status.UNAUTHENTICATED.withCause(e));
-                    }
-                });
-            }
-
-        };
-
-        synchronized (this) {
-            // Synchronize the update to avoid race condition
-            blockingStub = AccountServiceGrpc.newBlockingStub(channel)
-                    .withCallCredentials(callCredentials);
+        if (blockingStub != null && jwtToken != null) {
+            blockingStub = blockingStub.withCallCredentials(new JwtCredential(jwtToken));
         }
     }
 

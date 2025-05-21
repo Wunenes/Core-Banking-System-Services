@@ -10,8 +10,8 @@ public class TransactionNumberGenerator {
     private static final SecureRandom random = new SecureRandom();
     private static final AtomicLong counter = new AtomicLong(System.currentTimeMillis() % 1000);
 
-    public static String generate(TransactionDescription.TransactionType type, TransactionDescription.TransactionStatus status) {
-        String prefix = getString(type, status);
+    public static String generate(TransactionDescription.TransactionType type) {
+        String prefix = String.valueOf(getChar(type));
 
         // 2. Random Alphanumeric (8 chars)
         StringBuilder randomPart = new StringBuilder();
@@ -27,9 +27,8 @@ public class TransactionNumberGenerator {
         return base + calculateLuhnCheckDigit(base);
     }
 
-    private static String getString(TransactionDescription.TransactionType type, TransactionDescription.TransactionStatus status) {
+    private static char getChar(TransactionDescription.TransactionType type) {
         char TRANSACTIONTYPE = 0;
-        char TRANSACTIONSTATUS = 0;
         switch (type){
             case DEPOSIT -> TRANSACTIONTYPE = 'D';
             case WITHDRAWAL -> TRANSACTIONTYPE = 'W';
@@ -37,16 +36,7 @@ public class TransactionNumberGenerator {
             case EXTERNAL -> TRANSACTIONTYPE = 'E';
         }
 
-        switch (status){
-            case FAILED -> TRANSACTIONSTATUS = 'F';
-            case COMPLETED -> TRANSACTIONSTATUS = 'C';
-            case CANCELLED -> TRANSACTIONSTATUS = 'X';
-            case REVERSED -> TRANSACTIONSTATUS = 'R';
-            case PENDING -> TRANSACTIONSTATUS = 'P';
-            case PROCESSING -> TRANSACTIONSTATUS = 'T';
-        }
-
-        return TRANSACTIONTYPE + String.valueOf(TRANSACTIONSTATUS);
+        return TRANSACTIONTYPE;
     }
 
     private static int calculateLuhnCheckDigit(String input) {

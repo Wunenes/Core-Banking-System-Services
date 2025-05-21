@@ -40,9 +40,10 @@ message TransactionRequest {
   string to_account = 2;
   string amount = 3;
   string currency_type = 4;
-  TransactionType transaction_type = 5;
+  string transaction_type = 5;
   string description = 6;
-  string metadata = 7;
+  string initiated_by = 7;
+  string metadata = 8;
 }
 
 // Response message for transaction operations
@@ -52,8 +53,8 @@ message TransactionResponse {
   string to_account = 3;
   string amount = 4;
   string currency_type = 5;
-  TransactionType transaction_type = 6;
-  TransactionStatus transaction_status = 7;
+  string transaction_type = 6;
+  string transaction_status = 7;
   string fee_amount = 8;
   string fee_currency = 9;
   string timestamp = 10;
@@ -89,32 +90,6 @@ message TransactionsListResponse {
   int32 size = 4;
 }
 
-// Transaction types
-enum TransactionType {
-  TRANSFER = 0;
-  DEPOSIT = 1;
-  WITHDRAWAL = 2;
-  PAYMENT = 3;
-  FEE = 4;
-  INTEREST = 5;
-}
-
-// Transaction statuses
-enum TransactionStatus {
-  PENDING = 0;
-  COMPLETED = 1;
-  FAILED = 2;
-  REVERSED = 3;
-  CANCELLED = 4;
-}
-
-// Currency Types
-enum CurrencyType {
-  USD = 0;
-  EUR = 1;
-  GBP = 2;
-  KES = 3;
-}
 
 message InsufficientFundsError {
   string account_number = 1;

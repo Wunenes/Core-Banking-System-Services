@@ -3,6 +3,9 @@ package com.TransactionService.service.Impl;
 import com.AccountService.grpc.CreditResponse;
 import com.AccountService.grpc.CurrencyType;
 import com.AccountService.grpc.DebitResponse;
+import com.TransactionService.dto.LedgerEntryRequest;
+import com.TransactionService.service.LedgerKafkaProducer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.TransactionService.client.AccountServiceClient;
 import com.TransactionService.dto.TransactionRequestDTO;
@@ -14,6 +17,7 @@ import com.TransactionService.repository.TransactionRepository;
 import com.TransactionService.service.TransactionMapper;
 import com.TransactionService.service.TransactionService;
 import com.TransactionService.util.TransactionNumberGenerator;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,10 +25,22 @@ import java.util.List;
 
 @Service
 public class TransactionServiceImpl implements TransactionService, TransactionMapper {
-    AccountServiceClient accountServiceClient;
-    TransactionRepository transactionRepository;
+    @Autowired
+    private AccountServiceClient accountServiceClient;
 
+    @Autowired
+    private TransactionRepository transactionRepository;
+
+    @Autowired
+    private LedgerKafkaProducer ledgerKafkaProducer;
+
+    @Transactional
     public TransactionResponseDTO internalTransfer(TransactionRequestDTO request) throws IneligibleAccountException, InsufficientFundsException {
+        Transaction transaction = toModel(request);
+        transaction.setStatus(TransactionDescription.TransactionStatus.PENDING);
+        transaction.setTransactionReference(generateTransactionReference(transaction.getTransactionType()));
+        transactionRepository.save(transaction);
+
         try {
             String fromAccountNumber = request.getFromAccount();
             String toAccountNumber = request.getToAccount();
@@ -32,37 +48,57 @@ public class TransactionServiceImpl implements TransactionService, TransactionMa
             CurrencyType currencyType = request.getCurrencyType();
 
             DebitResponse debitResponse = accountServiceClient.debitAccount(fromAccountNumber, amount, currencyType);
-            CreditResponse creditResponse = accountServiceClient.creditAccount(toAccountNumber, amount, currencyType);
+            LedgerEntryRequest debitEntryRequest = LedgerEntryRequest.builder()
+                    .accountNumber(fromAccountNumber)
+                    .amount(amount)
+                    .currencyType(currencyType.toString())
+                    .type("DEBIT")
+                    .transactionId(transaction.getTransactionReference())
+                    .build();
 
-            Transaction transaction = toModel(request);
+            ledgerKafkaProducer.sendLedgerEntryRequest(debitEntryRequest);
+
+            CreditResponse creditResponse = accountServiceClient.creditAccount(toAccountNumber, amount, currencyType);
+            LedgerEntryRequest creditEntryRequest = LedgerEntryRequest.builder()
+                    .accountNumber(fromAccountNumber)
+                    .amount(amount)
+                    .currencyType(currencyType.toString())
+                    .type("CREDIT")
+                    .transactionId(transaction.getTransactionReference())
+                    .build();
+
+            ledgerKafkaProducer.sendLedgerEntryRequest(creditEntryRequest);
 
             transaction.setStatus(TransactionDescription.TransactionStatus.COMPLETED);
             transaction.setDebitBalanceAfterTransaction(new BigDecimal(debitResponse.getNewBalance()));
             transaction.setCreditBalanceAfterTransaction(new BigDecimal(creditResponse.getNewBalance()));
-            transaction.setTransactionReference(generateTransactionReference(transaction.getTransactionType(), transaction.getStatus()));
 
             transactionRepository.save(transaction);
-
             return toResponseDTO(transaction);
 
         } catch(IneligibleAccountException e) {
-            Transaction transaction = toModel(request);
             transaction.setStatus(TransactionDescription.TransactionStatus.FAILED);
             transactionRepository.save(transaction);
             throw e;
+
         } catch(InsufficientFundsException e) {
-            Transaction transaction = toModel(request);
             transaction.setStatus(TransactionDescription.TransactionStatus.FAILED);
             transaction.setRejectionReason(e.getMessage());
             transactionRepository.save(transaction);
             throw e;
-        }
-        catch (Exception e) {
+
+        } catch (Exception e) {
             throw new RuntimeException("Deposit failed: " + e.getMessage(), e);
         }
     }
 
+    @Transactional
     public TransactionResponseDTO processDeposit(TransactionRequestDTO request) throws IneligibleAccountException {
+        Transaction transaction = toModel(request);
+        transaction.setStatus(TransactionDescription.TransactionStatus.PENDING);
+        transaction.setTransactionReference(generateTransactionReference(transaction.getTransactionType()));
+        transactionRepository.save(transaction);
+
         try {
             String toAccountNumber = request.getToAccount();
             BigDecimal amount = request.getAmount();
@@ -80,16 +116,13 @@ public class TransactionServiceImpl implements TransactionService, TransactionMa
                     currencyType
             );
 
-            Transaction transaction = toModel(request);
             transaction.setStatus(TransactionDescription.TransactionStatus.COMPLETED);
             transaction.setCreditBalanceAfterTransaction(new BigDecimal(creditResponse.getNewBalance()));
-            transaction.setTransactionReference(generateTransactionReference(transaction.getTransactionType(), transaction.getStatus()));
             transactionRepository.save(transaction);
 
             return toResponseDTO(transaction);
 
         } catch(IneligibleAccountException e) {
-            Transaction transaction = toModel(request);
             transaction.setStatus(TransactionDescription.TransactionStatus.FAILED);
             transaction.setRejectionReason(e.getMessage());
             transactionRepository.save(transaction);
@@ -135,9 +168,8 @@ public class TransactionServiceImpl implements TransactionService, TransactionMa
                 .toList();
     }
 
-
-    private String generateTransactionReference(TransactionDescription.TransactionType transactionType, TransactionDescription.TransactionStatus status) {
-        return TransactionNumberGenerator.generate(transactionType, status);
+    private String generateTransactionReference(TransactionDescription.TransactionType transactionType) {
+        return TransactionNumberGenerator.generate(transactionType);
     }
 
     @Override

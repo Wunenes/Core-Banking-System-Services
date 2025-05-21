@@ -1,6 +1,7 @@
 package com.TransactionService.grpc;
 
 import com.AccountService.grpc.CurrencyType;
+import com.TransactionService.model.TransactionDescription;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,9 @@ public class TransactionGrpcServiceImpl extends TransactionServiceGrpc.Transacti
                     .toAccount(request.getToAccount())
                     .amount(new BigDecimal(request.getAmount()))
                     .currencyType(CurrencyType.valueOf(request.getCurrencyType()))
+                    .transactionType(TransactionDescription.TransactionType.valueOf(request.getTransactionType()))
                     .description(request.getDescription())
+                    .initiatedBy(request.getInitiatedBy())
                     .build();
             
             // Process the transaction
@@ -258,8 +261,8 @@ public class TransactionGrpcServiceImpl extends TransactionServiceGrpc.Transacti
             .setToAccount(dto.getToAccount())
             .setAmount(dto.getAmount().toString())
             .setCurrencyType(String.valueOf(dto.getCurrencyType()))
-            .setTransactionType(TransactionType.valueOf(dto.getTransactionType().toString()))
-            .setTransactionStatus(TransactionStatus.valueOf(dto.getTransactionType().toString()))
+            .setTransactionType(dto.getTransactionType().toString())
+            .setTransactionStatus(dto.getTransactionType().toString())
             .setFeeAmount(dto.getFeeAmount().toString())
             .setFeeCurrency(dto.getFeeCurrencyType().toString())
             .setTimestamp(dto.getTransactionTime() .format(DATE_FORMATTER))
