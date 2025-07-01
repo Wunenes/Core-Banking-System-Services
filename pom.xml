@@ -124,6 +124,12 @@
             <version>${protobuf.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-census</artifactId>
+            <version>${grpc.version}</version>
+        </dependency>
+
         <!-- javax.annotation for gRPC -->
         <dependency>
             <groupId>javax.annotation</groupId>

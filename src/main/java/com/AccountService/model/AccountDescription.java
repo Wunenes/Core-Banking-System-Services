@@ -13,7 +13,8 @@ public class AccountDescription {
         CHECKING,
         SAVINGS,
         LOAN,
-        FOREIGN
+        FOREIGN,
+        INTERNAL
     }
 
     public enum CurrencyType{

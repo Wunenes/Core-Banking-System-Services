@@ -124,6 +124,7 @@ public class AccountGrpcService extends AccountServiceGrpc.AccountServiceImplBas
                     .accountNumber(request.getAccountNumber())
                     .amount(new BigDecimal(request.getAmount()))
                     .currencyType(AccountDescription.CurrencyType.valueOf(String.valueOf(request.getCurrencyType())))
+
                     .build();
 
             com.AccountService.dto.response.DebitResponse response = accountService.debitAccount(debitRequest);
@@ -183,9 +184,13 @@ public class AccountGrpcService extends AccountServiceGrpc.AccountServiceImplBas
 
     // Common error handlers
     private void handleAccountNotFoundError(StreamObserver<?> responseObserver, AccountNotFoundException e) {
-        responseObserver.onError(Status.NOT_FOUND
-                .withDescription("Account not found: " + e.getMessage())
-                .asRuntimeException());
+        Status status = Status.NOT_FOUND
+                .withDescription("Account not found: " + e.getMessage());
+        
+        Metadata metadata = new Metadata();
+        metadata.put(ACCOUNT_NUMBER_KEY, e.getAccountIdentifier());
+
+        responseObserver.onError(status.asRuntimeException(metadata));
     }
 
     private void handleInsufficientFundsError(StreamObserver<?> responseObserver, InsufficientFundsException e) {
@@ -238,6 +243,7 @@ public class AccountGrpcService extends AccountServiceGrpc.AccountServiceImplBas
                 .setAccountNumber(response.getAccountNumber())
                 .setAmount(response.getAmount().toString())
                 .setCurrencyType(convertCurrencyType(response.getCurrencyType()))
+                .setNewBalance(response.getNewBalance().toString())
                 .build();
     }
 
@@ -246,6 +252,7 @@ public class AccountGrpcService extends AccountServiceGrpc.AccountServiceImplBas
                 .setAccountNumber(response.getAccountNumber())
                 .setAmount(response.getAmount().toString())
                 .setCurrencyType(convertCurrencyType(response.getCurrencyType()))
+                .setNewBalance(response.getNewBalance().toString())
                 .build();
     }
 

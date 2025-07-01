@@ -21,6 +21,7 @@ service AccountService {
 enum AccountType {
   CHECKING = 0;
   SAVINGS = 1;
+  INTERNAL = 2;
 }
 
 enum AccountStatus {
@@ -54,7 +55,6 @@ message GetAccountsByUserIdRequest {
 message AccountsListResponse {
   repeated AccountResponse accounts = 1;
 }
-
 
 message GetAccountRequest {
   string account_number = 1;

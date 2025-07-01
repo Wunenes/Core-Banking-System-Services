@@ -15,6 +15,7 @@ public class AccountNumberGenerator {
             case SAVINGS -> ACCOUNT_CODE = "02";
             case FOREIGN -> ACCOUNT_CODE = "03";
             case CHECKING -> ACCOUNT_CODE = "04";
+            case INTERNAL -> ACCOUNT_CODE = "05";
         }
 
         // 1. Build base number (without checksum)

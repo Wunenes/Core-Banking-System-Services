@@ -87,7 +87,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountResponse getAccountDetails(String accountNumber) throws AccountNotFoundException {
         Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(()-> new AccountNotFoundException("Account not found", "account number", accountNumber));
+                .orElseThrow(()-> new AccountNotFoundException("Account not found", accountNumber, "account number"));
 
         return new AccountResponse(account.getAccountType(), account.getAccountStatus(),
                 account.getCurrentBalance(), account.getAvailableBalance(), account.getCurrencyType(),
@@ -100,7 +100,7 @@ public class AccountServiceImpl implements AccountService {
         BigDecimal amount = request.getAmount();
 
         Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(()-> new AccountNotFoundException("Account not found", "account number", accountNumber));
+                .orElseThrow(()-> new AccountNotFoundException("Account not found", accountNumber, "account number"));
 
         if (account.getAccountStatus() == AccountDescription.AccountStatus.FROZEN ||
                 account.getAccountStatus() == AccountDescription.AccountStatus.CLOSED ||
@@ -129,7 +129,7 @@ public class AccountServiceImpl implements AccountService {
         BigDecimal amount = request.getAmount();
 
         Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(()-> new AccountNotFoundException("ACCOUNT NOT FOUND", "account number", accountNumber));
+                .orElseThrow(()-> new AccountNotFoundException("Account not found", accountNumber, "account number"));
 
         if (account.getAccountStatus() == AccountDescription.AccountStatus.FROZEN ||
                 account.getAccountStatus() == AccountDescription.AccountStatus.CLOSED ||
@@ -156,7 +156,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public DeleteResponse deleteAccount(DeleteRequest request) throws AccountNotFoundException, IneligibleAccountException, InsufficientFundsException {
         Account account = accountRepository.findByAccountNumber(request.getAccountNumber())
-                .orElseThrow(()-> new AccountNotFoundException("Account not found", "account number", request.getAccountNumber()));
+                .orElseThrow(()-> new AccountNotFoundException("Account not found", request.getAccountNumber(), "account number"));
 
         String accountNumber = account.getAccountNumber();
 
@@ -186,7 +186,7 @@ public class AccountServiceImpl implements AccountService {
         String reason = request.getReason();
 
         Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(()-> new AccountNotFoundException("Account not found", "account number", accountNumber));
+                .orElseThrow(()-> new AccountNotFoundException("Account not found", accountNumber, "account number"));
 
         if(Objects.equals(action, "freezeAccount")){
             account.setAccountStatus(AccountDescription.AccountStatus.FROZEN);
