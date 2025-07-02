@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.AccountService.grpc";
+option java_outer_classname = "AccountServiceProto";
+
+package account;
+
+// Service definition
+service AccountService {
+  rpc CreateAccount(CreateAccountRequest) returns (AccountResponse) {}
+  rpc GetAccountDetails(GetAccountRequest) returns (AccountResponse) {}
+  rpc FreezeAction(FreezeActionRequest) returns (FreezeActionResponse) {}
+  rpc DeleteAccount(DeleteRequest) returns (DeleteResponse) {}
+  rpc GetAccountDetailsByUserId(GetAccountsByUserIdRequest) returns (AccountsListResponse) {}
+
+}
+
+// Enums
+enum AccountType {
+  CHECKING = 0;
+  SAVINGS = 1;
+}
+
+enum AccountStatus {
+  ACTIVE = 0;
+  INACTIVE = 1;
+  FROZEN = 2;
+  CLOSED = 3;
+  DORMANT = 4;
+}
+
+enum CurrencyType {
+  KES = 0;
+  USD = 1;
+  EUR = 2;
+  GBP = 3;
+}
+
+// Request/Response messages
+message CreateAccountRequest {
+  string user_id = 1;
+  AccountType account_type = 2;
+  CurrencyType currency_type = 3;
+  string current_balance = 4;
+  string interest_rate = 5;
+}
+
+message GetAccountsByUserIdRequest {
+  string user_id = 1;
+}
+
+message AccountsListResponse {
+  repeated AccountResponse accounts = 1;
+}
+
+message GetAccountRequest {
+  string account_number = 1;
+}
+
+message AccountResponse {
+  AccountType account_type = 1;
+  AccountStatus account_status = 2;
+  string current_balance = 3;
+  string available_balance = 4;
+  CurrencyType currency_type = 5;
+  string account_number = 6;
+  string interest_rate = 7;
+}
+
+message FreezeActionRequest {
+  string action = 1;
+  string account_number = 2;
+  string reason = 3;
+}
+
+message FreezeActionResponse {
+  string action = 1;
+  string account_number = 2;
+  string reason = 3;
+  string timestamp = 4;
+}
+
+message CreditResponse {
+  string account_number = 1;
+  string amount = 2;
+  CurrencyType currency_type = 3;
+  string newBalance = 4;
+}
+
+message DebitResponse {
+  string account_number = 1;
+  string amount = 2;
+  CurrencyType currency_type = 3;
+  string newBalance = 4;
+}
+
+message DeleteRequest {
+  string account_number = 1;
+  string receiving_account_number = 2;
+}
+
+message DeleteResponse {
+  string account_number = 1;
+  string timestamp = 2;
+  CreditResponse credit_response = 3;
+  DebitResponse debit_response = 4;
+}
+
+message IneligibleAccountException {
+  string account_number = 1;
+  string attempted_Operation = 2;
+}
