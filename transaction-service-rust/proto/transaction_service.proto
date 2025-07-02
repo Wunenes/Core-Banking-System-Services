@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package transaction;
+
+service TransactionService {
+  // Process an internal transfer between accounts
+  rpc InternalTransfer(TransactionRequest) returns (TransactionResponse) {}
+  
+  // Process a deposit to an account
+  rpc ProcessDeposit(TransactionRequest) returns (TransactionResponse) {}
+  
+  // Get transaction details by transaction reference
+  rpc GetTransactionByReference(TransactionReferenceRequest) returns (TransactionResponse) {}
+
+  // Get transactions based on fromAccount
+  rpc GetTransactionsByFromAccount(AccountRequest) returns (TransactionsListResponse) {}
+
+  // Get transactions based on toAccount
+  rpc GetTransactionsByToAccount(AccountRequest) returns (TransactionsListResponse) {}
+
+  // Get all transactions for an account
+  rpc GetTransactionsByAccountId(AccountTransactionsRequest) returns (TransactionsListResponse) {}
+
+  // Get transaction by transaction time
+  rpc GetTransactionByTransactionTime(TransactionTimeRequest) returns (TransactionsListResponse) {}
+}
+
+message AccountRequest {
+  string account_id = 1;
+}
+
+message TransactionRequest {
+  string from_account = 1;
+  string to_account = 2;
+  string amount = 3;
+  string currency_type = 4;
+  string transaction_type = 5;
+  string description = 6;
+  string initiated_by = 7;
+  string metadata = 8;
+}
+
+message TransactionResponse {
+  string transaction_reference = 1;
+  string from_account = 2;
+  string to_account = 3;
+  string amount = 4;
+  string currency_type = 5;
+  string transaction_type = 6;
+  string transaction_status = 7;
+  string fee_amount = 8;
+  string fee_currency = 9;
+  string timestamp = 10;
+  string description = 11;
+  string metadata = 12;
+}
+
+message TransactionReferenceRequest {
+  string transaction_reference = 1;
+}
+
+message AccountTransactionsRequest {
+  string account_id = 1;
+  int32 page = 2;
+  int32 size = 3;
+  string sort_by = 4;
+  bool ascending = 5;
+}
+
+message TransactionTimeRequest {
+  string transaction_time = 1;
+}
+
+message TransactionsListResponse {
+  repeated TransactionResponse transactions = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 size = 4;
+}
+
+message InsufficientFundsError {
+  string account_number = 1;
+  string current_balance = 2;
+  string requested_amount = 3;
+  string currency = 4;
+}
+
+message IneligibleAccountException {
+  string account_number = 1;
+  string attempted_Operation = 2;
+}

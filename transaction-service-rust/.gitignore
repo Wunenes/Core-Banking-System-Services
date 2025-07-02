@@ -1,0 +1,6 @@
+.env
+Cargo.toml
+Cargo.lock
+build.rs
+/migrations
+/target
